@@ -1,0 +1,25 @@
+{
+  "name": "grub_mongodb",
+  "version": "1.0.0",
+  "description": "",
+  "main": "src/mongodb.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/guimaraesprogramador/grub_mongodb.git"
+  },
+  "keywords": [
+    "12241020ke"
+  ],
+  "author": "kevin",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/guimaraesprogramador/grub_mongodb/issues"
+  },
+  "homepage": "https://github.com/guimaraesprogramador/grub_mongodb#readme",
+  "dependencies": {
+    "mongodb": "^3.2.4"
+  }
+}
