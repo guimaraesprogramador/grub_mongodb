@@ -3,7 +3,8 @@ class tabela_vendas{
        this.vendas ={};
         this.mongodb= require("mongodb").MongoClient;
         this.assert = require ( "assert" );
-       
+        
+         this.assert = require('assert');
     }
     
     acessar_mongodb(){
@@ -14,9 +15,8 @@ class tabela_vendas{
   criar_banco(){
         
       this.mongodb.connect(this.acessar_mongodb(),function(err,db){
-          var database ="test";
+       const database = "banco";
               const client = db.db(database);
-              client.collection("vendas");
               console.log("teu certo");
           db.close();
       })
@@ -28,15 +28,13 @@ class tabela_vendas{
         this.vendas.nome = nome;
         this.vendas.valor = valor;
       
-           return this.mongodb.connect(this.acessar_mongodb(),function(err,db){
+        this.mongodb.connect(this.acessar_mongodb(),function(err,db){
             this.assert.equal(err,null);
             console.log("Connected successfully to server");
-            this.client = db.db(this.database);
-            this.client.collection("vendas").insertOne(this.vendas,function(err,res){
-                if(err)throw err;
-                console.log("1 documento inserto");
-                db.close();
-            })
+            var client = db.db(this.database);
+            client.collection("vendas").insert(this.vendas);
+            this.assert.equal(err,null);
+            db.close();
            });
     }
     remover(id){
@@ -50,16 +48,22 @@ class tabela_vendas{
         this.express = require("express");
         this.app = this.express();
         var http = require('http');
+        var fs = require('fs');
         const v = new tabela_vendas();
-        this.app.listen(8000,function(err){
-           
-        })
+        
         this.app.get("/",function(resq,resp){
             resq.header('Content-type', 'text/html');
                 resp.redirect("/index.html");
         })
        this.app.get("/index.html",function(resquist,response){
         v.criar_banco()
+        fs.readFile("c:/Users/kevin/Desktop/grub_mongodb//www/index.html",function(err,data){
+            console.log(data);
+            response.end(data);
+        })
+       })
+       this.app.post("inserir_valor",function(res,resq){
+           v.adicionar(0,"marcarrão",20);
        })
        this.app.set('port', process.env.PORT  || 8000);
        
