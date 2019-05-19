@@ -6,6 +6,17 @@
     <title>Document</title>
 </head>
 <body>
-    kevin
+   <form action="*" method="POST">
+        <label>ID:</label>
+        <input type="number" id="id" name="id"/><br>
+        <label>Produtos</label>
+        <input type="text" name="produto"/><br>
+        <label> Valor</label>
+        <input type="text" name="valor"/><br>
+        <input type="submit" value="inserir"/>
+   </form>
+   <form action="/lista" method="GET">
+       <input type="submit" value="lista">
+   </form>
 </body>
 </html>

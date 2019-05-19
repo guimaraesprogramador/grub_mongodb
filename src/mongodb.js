@@ -3,8 +3,9 @@ class tabela_vendas{
        this.vendas ={};
         this.mongodb= require("mongodb").MongoClient;
         this.assert = require ( "assert" );
-        
+        this.database = "banco";
          this.assert = require('assert');
+         this.tabela = "vendas";
     }
     
     acessar_mongodb(){
@@ -15,27 +16,34 @@ class tabela_vendas{
   criar_banco(){
         
       this.mongodb.connect(this.acessar_mongodb(),function(err,db){
-       const database = "banco";
-              const client = db.db(database);
-              console.log("teu certo");
+       
+              var client = db.db(tabela_vendas.database);
+              
           db.close();
       })
     }
         
     
-    adicionar(id,nome,valor){
+    adicionar(id,nome,valor,db,tabela){
         this.vendas.id = id;
         this.vendas.nome = nome;
         this.vendas.valor = valor;
-      
-        this.mongodb.connect(this.acessar_mongodb(),function(err,db){
-            this.assert.equal(err,null);
             console.log("Connected successfully to server");
-            var client = db.db(this.database);
-            client.collection("vendas").insert(this.vendas);
-            this.assert.equal(err,null);
-            db.close();
-           });
+          var collection =  db.collection(tabela);
+          collection.insertMany([{ids:this.vendas.id},{produtos:this.vendas.produto},
+            {valores:this.vendas.valor}],function(err,result){
+                if(err) throw console.log(err);
+                console.log("adicioniou o indice "+ result+" na tabela vendas");
+            });
+    }
+    lista(id,db,tabela){
+        this.vendas.id = id;
+        console.log("Connected successfully to server");
+        var collection =  db.collection(tabela);
+        collection.find({ids:this.vendas.id}).toArray(function(err, docs) {
+            console.log("Found the following records");
+            console.log(docs);
+        });
     }
     remover(id){
        this.vendas.id = id;
@@ -50,7 +58,9 @@ class tabela_vendas{
         var http = require('http');
         var fs = require('fs');
         const v = new tabela_vendas();
-        
+        var bodyParser = require('body-parser');
+        this.app.use(bodyParser.json());
+        this.app.use(bodyParser.urlencoded({ extended: true }));
         this.app.get("/",function(resq,resp){
             resq.header('Content-type', 'text/html');
                 resp.redirect("/index.html");
@@ -62,11 +72,15 @@ class tabela_vendas{
             response.end(data);
         })
        })
-       this.app.post("inserir_valor",function(res,resq){
-           v.adicionar(0,"marcarrão",20);
+       this.app.post("*",function(res,resq)
+       {
+           v.mongodb.connect(v.acessar_mongodb(),function(err,db){
+               const vendas = db.db(v.database);
+            v.adicionar(res.body.id,res.body.produto,res.body.valor,vendas,v.tabela);
+           })
+         
        })
-       this.app.set('port', process.env.PORT  || 8000);
-       
+      
        var httpServer = http.createServer(this.app);
        httpServer.listen(8080,"localhost",function(err){
 
