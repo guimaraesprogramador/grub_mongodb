@@ -6,6 +6,7 @@ class tabela_vendas{
         this.database = "banco";
          this.assert = require('assert');
          this.tabela = "vendas";
+         this.td= null;
     }
     
     acessar_mongodb(){
@@ -36,14 +37,25 @@ class tabela_vendas{
                 console.log("adicioniou o indice "+ result+" na tabela vendas");
             });
     }
-    lista(id,db,tabela){
-        this.vendas.id = id;
+    lista(db,tabela){
+        var tr = "<tr>";
         console.log("Connected successfully to server");
         var collection =  db.collection(tabela);
-        collection.find({ids:this.vendas.id}).toArray(function(err, docs) {
+      collection.find().toArray(function(err, docs) {
+            
             console.log("Found the following records");
-            console.log(docs);
+            for(var i =0;i<docs.length;i++){
+              
+                tr += "<td>"+docs[i].ids+"</td>";
+            }
+            tr +="</tr>";
+            tabela_vendas.td =  tr;
+            if(tabela_vendas.td !=null)
+        {
+                  return tabela_vendas.td;
+        }
         });
+        
     }
     remover(id){
        this.vendas.id = id;
@@ -68,20 +80,39 @@ class tabela_vendas{
        this.app.get("/index.html",function(resquist,response){
         v.criar_banco()
         fs.readFile("c:/Users/kevin/Desktop/grub_mongodb//www/index.html",function(err,data){
-            console.log(data);
             response.end(data);
         })
        })
-       this.app.post("*",function(res,resq)
+       this.app.post("/www/index.html",function(res,resq)
        {
-           v.mongodb.connect(v.acessar_mongodb(),function(err,db){
-               const vendas = db.db(v.database);
-            v.adicionar(res.body.id,res.body.produto,res.body.valor,vendas,v.tabela);
-           })
-         
+          if(res.body.botao =="inserir"){
+            v.mongodb.connect(v.acessar_mongodb(),function(err,db){
+                const vendas = db.db(v.database);
+             v.adicionar(res.body.id,res.body.produto,res.body.valor,vendas,v.tabela);
+             db.close();
+             resq.redirect("/index.html");
+            })
+          }
+          else if(res.body.botao =="lista")
+          {
+              var x = null;
+            v.mongodb.connect(v.acessar_mongodb(),function(err,db){
+                const vendas = db.db(v.database);
+               
+           v.lista(vendas,v.tabela);
+                 db.close();
+                 res.end(x);
+                
+                
+              })
+             
+              
+          }
+          
        })
       
        var httpServer = http.createServer(this.app);
        httpServer.listen(8080,"localhost",function(err){
 
        });
+ 
