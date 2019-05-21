@@ -51,7 +51,7 @@ class tabela_vendas{
                 console.log("Found the following records");
                 for(var i =0;i<docs.length;i++){
                   tr.push({ids:docs[i].ids,produtos:docs[i].produtos,
-                valor:docs[i].valor});
+                valor:docs[i].valores});
                 }
                 resolve(tr);
                 
@@ -60,14 +60,32 @@ class tabela_vendas{
         
         
     }
-    remover(id){
-       this.vendas.id = id;
+    remover(id,db,tabela){
+       var collection = db.collection(tabela);
+       collection.deleteOne({ids:id},function(err,result){
+        console.log("Removed the document"+id);
+       })
+    }
+    selecionar_item(id,db,tabela){
+      return new Promise(result=>{
+        if(id =="")id =undefined;
+        var collection = db.collection(tabela);
+        collection.find({id:id}).toArray(function(err, docs) {
+          var tr = [{id:""}];
+          console.log(docs);
+          for(var i = 0;i<docs.length;i++){
+            tr.push({id:docs[i].ids});
+          }
+          result(tr);
+        })
+      })
     }
     notificar(data){
         this.vendas.forEach(v=>v(data));
     }
    
 }
+
         this.express = require("express");
         this.app = this.express();
         var http = require('http');
@@ -78,6 +96,7 @@ class tabela_vendas{
         this.app.use(bodyParser.urlencoded({ extended: true }));
         this.app.get("/",function(resq,resp){
             resq.header('Content-type', 'text/html');
+            resq.header("Content-type","application/json")
                 resp.redirect("/index.html");
         })
        this.app.get("/index.html",function(resquist,response){
@@ -91,7 +110,7 @@ class tabela_vendas{
           if(res.body.botao =="inserir"){
             v.mongodb.connect(v.acessar_mongodb(),function(err,db){
                 const vendas = db.db(v.database);
-             v.adicionar(res.body.id,res.body.produto,res.body.valor,vendas,v.tabela);
+             v.adicionar(res.body.id,res.body.produto,res.body.valor,vendas,v.tabelas);
              db.close();
              resq.redirect("/index.html");
             })
@@ -105,31 +124,32 @@ class tabela_vendas{
            {
                 
                x = resp;
-               
-            //    for(var i = 0;i<x.length;i++){
-            //         resq.set("ids"+i,x[i].ids);
-            //         resq.set("produto"+i,x[i].produto);
-            //    }
-            //    var objetos = JSON.stringify(x);
-            //     resq.set("id",objetos.ids);
-            //     resq.set("produto",objetos.produtos);
-            //     resq.set("valor",objetos.valor);
-             
-                db.close();
-                const cheerio =  v.cheerio.load("c:/Users/kevin/Desktop/grub_mongodb/www/index.html");
-                var teste =  cheerio("<td>"+x[0].valor+"</td>").appendTo(".linha");
-                console.log(teste);
-                resq.header('Content-type', 'text/html');
-                fs.readFile("c:/Users/kevin/Desktop/grub_mongodb/www/index.html",function(err,data){
-                   data.write(teste.text());
-                   resq.end(data);
-                        });
-           })
-              })   
-          }
+               db.close();
+               var dados  = {};
+               for(var i = 0;i<x.length;i++){
+                 dados.id += x[i].ids+" , ";
+                 dados.produto += x[i].produtos + " , ";
+                 dados.valor += x[i].valor + " , ";
+               }
+               var exibe = "id:"+dados.id + " produtos: "+dados.produto + " valor: "+dados.valor;
+               resq.end(exibe)
+           });     
+          })
+        }
+        else if(res.body.botao =="delete"){
+          v.mongodb.connect(v.acessar_mongodb(),function(err,db){
+            const banco = db.db(v.database);
+            v.selecionar_item(res.body.id,banco,v.tabelas).then(function(resp){
+              for(var o =0;o<resp.length;o++){
+                v.remover(resp[o].id,banco,v.tabelas)
+              }
+            })
+           
+            db.close();
+            resq.redirect("/index.html");
+          })
+        }
 });
-
        var httpServer = http.createServer(this.app);
        httpServer.listen(8080,"localhost",function(err){
-
        });
