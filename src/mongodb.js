@@ -20,10 +20,9 @@ class tabela_vendas{
       this.mongodb.connect(this.acessar_mongodb(),function(err,db){
                 
               var client = db.db(banco);
-              client.createCollection(t,{ capped : true,size:5242880,max: 5000},function(er,result){
-                    console.log(t);
+              
                     db.close();
-              });
+             
           
       })
     }
@@ -72,7 +71,6 @@ class tabela_vendas{
     }
     selecionar_item(id,db,tabela){
       return new Promise(result=>{
-        if(id =="")id = undefined;
         console.log(id);
         var collection = db.collection(tabela);
         collection.find({ids:id}).toArray(function(err, docs) {
@@ -143,13 +141,13 @@ class tabela_vendas{
                    continue
                   }
                   else{
-                    exibe.push("id:"+dados[o].id + " produtos: "+dados[o].produtos + " valor: "+dados[o].valor);
+                    exibe.push("id:"+dados[o].ids + " produtos: "+dados[o].produtos + " valor: "+dados[o].valor);
                   }
                   
                      }
                }
                if(dados.length == 0){
-                 exibe.push("id:"+dados[0].id + " produtos: "+dados[0].produto + " valor: "+dados[0].valor);
+                 exibe.push("id:"+dados[0].ids + " produtos: "+dados[0].produto + " valor: "+dados[0].valor);
                }
                resq.end(exibe.toString())
            });     
@@ -167,10 +165,32 @@ class tabela_vendas{
           })
         }
         else if(res.body.botao == "update"){
+          v.vendas.produto = res.body.produto;
+          v.vendas.valor = res.body.valor;
           v.mongodb.connect(v.acessar_mongodb(),function(err,db){
             const banco  = db.db(v.database);
-            v.se
+            var collection = banco.collection(v.tabelas);
+            var set = {
+              produtos:v.vendas.produto,
+              valores:v.vendas.valor
+            };
+            v.selecionar_item(res.body.id,banco,v.tabelas).then(succe=>{
+              for(var i = 0;i<succe.length;i++){
+                var query = {ids:succe[i].ids};
+                var data = {$set:{produtos:set.produtos,valores:set.valores}};
+                collection.updateOne(query,data,function(err, res) {
+                  if (err) console.log(err);
+                  console.log("1 document updated");
+                });
+                
+               
+              }
+              db.close();
+                  resq.redirect("/index.html");
+            })
+            
           });
+          
         }
 });
        var httpServer = http.createServer(this.app);
