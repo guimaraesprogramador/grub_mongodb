@@ -60,21 +60,26 @@ class tabela_vendas{
         
         
     }
-    remover(id,db,tabela){
+    remover(db,tabela,fechar_banco){
+      
        var collection = db.collection(tabela);
-       collection.deleteOne({ids:id},function(err,result){
-        console.log("Removed the document"+id);
+       collection.drop(result=>{
+         console.log(result);
+         fechar_banco.close();
        })
+        
+     
     }
     selecionar_item(id,db,tabela){
       return new Promise(result=>{
-        if(id =="")id =undefined;
+        if(id =="")id = undefined;
+        console.log(id);
         var collection = db.collection(tabela);
-        collection.find({id:id}).toArray(function(err, docs) {
-          var tr = [{id:""}];
+        collection.find({ids:id}).toArray(function(err, docs) {
+          var tr = [];
           console.log(docs);
           for(var i = 0;i<docs.length;i++){
-            tr.push({id:docs[i].ids});
+            tr.push(docs[i]);
           }
           result(tr);
         })
@@ -125,29 +130,47 @@ class tabela_vendas{
                 
                x = resp;
                db.close();
-               var dados  = {};
+               var dados  = [{ids:null,produtos:null,valor:0}];
                for(var i = 0;i<x.length;i++){
-                 dados.id += x[i].ids+" , ";
-                 dados.produto += x[i].produtos + " , ";
-                 dados.valor += x[i].valor + " , ";
+                 dados.push({ids:x[i].ids,produtos: x[i].produtos,valor:x[i].valor})
                }
-               var exibe = "id:"+dados.id + " produtos: "+dados.produto + " valor: "+dados.valor;
-               resq.end(exibe)
+               var exibe = [];
+               
+               if(dados.length>0){
+                for(var o =0;o<dados.length;o++){
+                  if(dados[o].ids == null)
+                  {
+                   continue
+                  }
+                  else{
+                    exibe.push("id:"+dados[o].id + " produtos: "+dados[o].produtos + " valor: "+dados[o].valor);
+                  }
+                  
+                     }
+               }
+               if(dados.length == 0){
+                 exibe.push("id:"+dados[0].id + " produtos: "+dados[0].produto + " valor: "+dados[0].valor);
+               }
+               resq.end(exibe.toString())
            });     
           })
         }
         else if(res.body.botao =="delete"){
           v.mongodb.connect(v.acessar_mongodb(),function(err,db){
             const banco = db.db(v.database);
-            v.selecionar_item(res.body.id,banco,v.tabelas).then(function(resp){
-              for(var o =0;o<resp.length;o++){
-                v.remover(resp[o].id,banco,v.tabelas)
-              }
-            })
+            v.remover(banco,v.tabelas,db)
+            
+              resq.redirect("/index.html");
+          
            
-            db.close();
-            resq.redirect("/index.html");
+          
           })
+        }
+        else if(res.body.botao == "update"){
+          v.mongodb.connect(v.acessar_mongodb(),function(err,db){
+            const banco  = db.db(v.database);
+            v.se
+          });
         }
 });
        var httpServer = http.createServer(this.app);
